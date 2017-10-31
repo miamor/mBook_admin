@@ -12,6 +12,37 @@ class User extends Config {
 		parent::__construct();
 	}
 
+	function create () {
+		$query = "INSERT INTO
+					" . $this->table_name . "
+				SET
+					username = :username,
+					first_name = :first_name,
+					last_name = :last_name,
+					oauth_uid = :oauth_uid,
+					coins = :coins,
+					avatar = :avatar,
+					email = :email,
+					type = :type
+				";
+
+		$stmt = $this->conn->prepare($query);
+
+		// bind parameters
+		$stmt->bindParam(':username', $this->username);
+		$stmt->bindParam(':first_name', $this->first_name);
+		$stmt->bindParam(':last_name', $this->last_name);
+		$stmt->bindParam(':coins', $this->coins);
+		$stmt->bindParam(':avatar', $this->avatar);
+		$stmt->bindParam(':oauth_uid', $this->oauth_uid);
+		$stmt->bindParam(':email', $this->email);
+		$stmt->bindParam(':type', $this->type);
+
+		// execute the query
+		if ($stmt->execute()) return true;
+		else return false;
+	}
+
 	function readAll ($limit = '') {
 		$lim = '';
 		if ($limit) $lim = "LIMIT 0,{$limit}";
@@ -35,6 +66,45 @@ class User extends Config {
 		}
 		$this->all_list = $this->uList;
 		return $this->uList;
+	}
+
+	function getAll ($from_record_num = 0, $records_per_page = 24) {
+		$lim = '';
+		$con = array();
+
+		if ($records_per_page > 0) $lim = "LIMIT {$from_record_num}, {$records_per_page}";
+
+		$query = "SELECT
+					*
+				FROM
+					" . $this->table_name . "
+				ORDER BY
+					created DESC, coins DESC
+				{$lim}";
+
+		$stmt = $this->conn->prepare($query);
+		$stmt->execute();
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+			$row['link'] = $this->uLink.'/'.$row['username'];
+			if ($row['type'] == 1) $row['name'] = $row['title'];
+			else $row['name'] = ($row['last_name']) ? ($row['last_name'].' '.$row['first_name']) : $row['first_name'];
+
+			$this->uList[] = $row;
+		}
+		//$this->all_list = $this->uList;
+		return $this->uList;
+	}
+
+	function countAll () {
+		$query = "SELECT
+					id
+				FROM
+					" . $this->table_name . "
+				";
+
+		$stmt = $this->conn->prepare($query);
+		$stmt->execute();
+		return $stmt->rowCount();
 	}
 
 	function readOne ($withC = false) {
@@ -93,6 +163,17 @@ class User extends Config {
 		return $row;
 	}
 
+	function sReadOneByUsername () {
+		$query = "SELECT id FROM " . $this->table_name . " WHERE username = ? LIMIT 0,1";
+
+		$stmt = $this->conn->prepare($query);
+		$stmt->bindParam(1, $this->username);
+		$stmt->execute();
+
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		return $row;
+	}
+
 	public function countSubmissions ($u) {
 		if ($u) $cond = "WHERE uid = {$u}";
 
@@ -137,14 +218,59 @@ class User extends Config {
 		$stmt = $this->conn->prepare($query);
 
 		// bind parameters
-/*		foreach ($valueAr as $vK => $oneVal) {
+		/*foreach ($valueAr as $vK => $oneVal) {
 			$stmt->bindParam(':'.$vk, $oneVal);
-		}
-*/		$stmt->bindParam(':id', $u);
+		}*/
+		$stmt->bindParam(':id', $u);
 
 		// execute the query
 		if ($stmt->execute()) return true;
 		else return false;
 	}
+
+	public function update() {
+		$query = "UPDATE
+					" . $this->table_name . "
+				SET
+					username = :username,
+					first_name = :first_name,
+					last_name = :last_name,
+					oauth_uid = :oauth_uid,
+					coins = :coins,
+					avatar = :avatar,
+					email = :email,
+					type = :type
+				WHERE
+					id = :id";
+
+		$stmt = $this->conn->prepare($query);
+
+		//echo $this->username.'~'.$this->first_name.'~'.$this->last_name.'~'.$this->coins.'~'.$this->avatar.'~'.$this->oauth_uid.'~'.$this->email.'~'.$this->id;
+		// bind parameters
+		$stmt->bindParam(':username', $this->username);
+		$stmt->bindParam(':first_name', $this->first_name);
+		$stmt->bindParam(':last_name', $this->last_name);
+		$stmt->bindParam(':coins', $this->coins);
+		$stmt->bindParam(':avatar', $this->avatar);
+		$stmt->bindParam(':oauth_uid', $this->oauth_uid);
+		$stmt->bindParam(':email', $this->email);
+		$stmt->bindParam(':type', $this->type);
+		$stmt->bindParam(':id', $this->id);
+
+		// execute the query
+		if ($stmt->execute()) return true;
+		else return false;
+	}
+
+	public function delete() {
+		$query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
+
+		$stmt = $this->conn->prepare($query);
+		$stmt->bindParam(1, $this->id);
+
+		if ($result = $stmt->execute()) return true;
+		else return false;
+	}
+
 }
 ?>

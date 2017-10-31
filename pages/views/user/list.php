@@ -3,8 +3,8 @@
 $page_title = "Users list";
 if (!$do && !$v && !$temp) include 'pages/views/_temp/header.php';
 
-$config->addJS('plugins', 'DataTables/datatables.min.js');
-$config->addJS('dist', 'user/list.js');
+//$config->addJS('plugins', 'DataTables/datatables.min.js');
+$config->addJS('dist', 'write/list.js');
 
 $uList = $user->readAll();
 

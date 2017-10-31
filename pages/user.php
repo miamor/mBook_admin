@@ -20,26 +20,15 @@ if (isset($id) && $id) {
 	// Reset $id to ID property of product
 	$id = $user->id;
 
-	if (!$m) $m = 'home';
-	if ($m == 'reviews') {
-		include_once 'objects/feed.php';
-		$feed = new Feed();
-		$stmt = $feed->fetchFeed('review', $id);
-		$user->feedReviewsList = (isset($feed->all_list[$id.'_review'])) ? $feed->all_list[$id.'_review'] : array();
-	} 
-	else if ($m == 'status') {
-		include_once 'objects/feed.php';
-		$feed = new Feed();
-		$feed->fetchFeed('status', $id);
-		$user->feedStatusList = (isset($feed->all_list[$id.'_status'])) ? $feed->all_list[$id.'_status'] : array();
-	} 
 }
 
-if ($do) include 'system/'.$page.'/'.$do.'.php';
-else {
-	if (!isset($id) || !$id) include 'views/'.$page.'/list.php';
-	else if ($m != 'settings' || $config->u === $user->id) {
-		include 'views/'.$page.'/view.php';
-	}
-	else include 'error.php';
+if ($do) include 'pages/system/'.$page.'/'.$do.'.php';
+else if ($mode) {
+	include 'views/'.$page.'/'.$mode.'.php';
 }
+else if ($n) {
+	if ($user->id) {
+		$mode = 'edit';
+		include 'views/'.$page.'/'.$mode.'.php';
+	} else include 'views/error.php';
+} else include 'views/'.$page.'/list.php';
